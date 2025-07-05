@@ -409,8 +409,8 @@ const HomePage = ({ onLogout, onChangePassword }) => {
             </header>
             <main className="w-full max-w-screen-2xl mx-auto flex-1 grid lg:grid-cols-2 gap-4 overflow-hidden">
                 <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
-                    <h2 className={sectionTitleStyle}>Input Section</h2>
                     <div className="flex-1 overflow-y-auto pr-2">
+                        <h2 className={sectionTitleStyle}>Input Section</h2>
                         <div className="flex flex-col gap-3">
                             <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
                             <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
