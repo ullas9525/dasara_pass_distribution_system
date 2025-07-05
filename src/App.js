@@ -391,7 +391,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const tableCellStyle = "px-2 py-1 whitespace-nowrap text-sm text-gray-800";
 
     return (
-        <div className="h-screen bg-gray-50 p-2 font-sans flex flex-col items-center">
+        <div className="h-screen bg-gray-50 p-2 font-sans flex flex-col">
             {showMessage && <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all">{message}</div>}
              <header className="w-full max-w-screen-2xl mx-auto flex-shrink-0 flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center flex-1">MYSURU DASARA PASSES DISTRIBUTION 2025</h1>
@@ -407,38 +407,38 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                     )}
                 </div>
             </header>
-            <main className="w-full max-w-screen-2xl mx-auto flex-1 flex flex-col gap-4 overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
-                        <div className="flex-1 overflow-y-auto pr-2">
-                            <h2 className={sectionTitleStyle}>Input Section</h2>
-                            <div className="flex flex-col gap-3">
-                                <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
-                                <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
-                                <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => handleMobileChange(e, setRecipientMobile)} maxLength="10" /></div>
-                                <div className={`${formRowStyle} flex-wrap`}>
-                                    <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-24 text-right">Category ::</label>
-                                    <div className="flex gap-4 py-2">
-                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Palace</span></label>
-                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Torchlight</span></label>
-                                    </div>
-                                    <div className="flex-1 min-w-[120px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label="Gate" disabled={!passCategory} /></div>
-                                    <div className="w-28"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder="Passes" min="1" disabled={!passCategory} /></div>
+            <main className="w-full max-w-screen-2xl mx-auto flex-1 grid lg:grid-cols-2 gap-4 overflow-hidden">
+                <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
+                    <h2 className={sectionTitleStyle}>Input Section</h2>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                        <div className="flex flex-col gap-3">
+                            <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
+                            <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
+                            <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => handleMobileChange(e, setRecipientMobile)} maxLength="10" /></div>
+                            <div className={`${formRowStyle} flex-wrap`}>
+                                <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-24 text-right">Category ::</label>
+                                <div className="flex gap-4 py-2">
+                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Palace</span></label>
+                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Torchlight</span></label>
                                 </div>
-                                <div className="border-t pt-3 mt-3">
-                                    <h3 className="text-md font-semibold text-gray-700 mb-3">Messenger Details</h3>
-                                    <div className="flex flex-col gap-3">
-                                        <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
-                                        <div className={formRowStyle}><label className={labelStyle}>Designation ::</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
-                                        <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => handleMobileChange(e, setMessengerMobile)} maxLength="10" /></div>
-                                    </div>
+                                <div className="flex-1 min-w-[120px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label="Gate" disabled={!passCategory} /></div>
+                                <div className="w-28"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder="Passes" min="1" disabled={!passCategory} /></div>
+                            </div>
+                            <div className="border-t pt-3 mt-3">
+                                <h3 className="text-md font-semibold text-gray-700 mb-3">Messenger Details</h3>
+                                <div className="flex flex-col gap-3">
+                                    <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
+                                    <div className={formRowStyle}><label className={labelStyle}>Designation ::</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
+                                    <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => handleMobileChange(e, setMessengerMobile)} maxLength="10" /></div>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
-                        {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto">
+                    <button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
+                    {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
+                </div>
+                <div className="flex flex-col gap-4 overflow-y-auto">
+                    <div className="bg-white p-4 rounded-lg shadow-lg">
                         <h2 className={sectionTitleStyle}>Records Table</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
@@ -462,10 +462,10 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                             </table>
                         </div>
                     </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-lg flex-1 overflow-y-auto">
-                    <SummaryTable title="Palace Summary" type="palace" gates={GATES} totals={palaceTotalPasses} distributed={distributedPalace} balance={balancePalace} onEdit={handleEditTotalPasses} />
-                    <SummaryTable title="Torchlight Summary" type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} />
+                    <div className="bg-white p-4 rounded-lg shadow-lg">
+                        <SummaryTable title="Palace Summary" type="palace" gates={GATES} totals={palaceTotalPasses} distributed={distributedPalace} balance={balancePalace} onEdit={handleEditTotalPasses} />
+                        <SummaryTable title="Torchlight Summary" type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} />
+                    </div>
                 </div>
             </main>
             {showEditTotalModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Edit Total for Gate {GATES[editTotalGateIndex]}</h3><input type="number" ref={editTotalInputRef} className={inputStyle} value={editTotalValue} onChange={(e) => setEditTotalValue(e.target.value)} min="0" onKeyDown={handleModalKeyDown} /><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowEditTotalModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={handleSaveTotalPasses} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>}
