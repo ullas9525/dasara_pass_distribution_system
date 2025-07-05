@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
-// Import Firebase services directly
 import { initializeApp } from 'firebase/app';
-// **UPGRADE:** Import setPersistence and browserLocalPersistence for data persistence
-import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 
 // --- Main App Component ---
 const App = () => {
     // --- State Management ---
 
+    // Hardcoded Firebase configuration from your firebase.js file
+    const firebaseConfig = {
+      apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
+      authDomain: "dasara-pass-data.firebaseapp.com",
+      projectId: "dasara-pass-data",
+      storageBucket: "dasara-pass-data.appspot.com",
+      messagingSenderId: "1055205777690",
+      appId: "1:1055205777690:web:82e0c017de7bd19ccb8ca3",
+      measurementId: "G-3XK1S6GG0M"
+    };
+    // Use the projectId as the appId for database paths
+    const appId = firebaseConfig.projectId;
+
     // Firebase instances and auth state
     const [db, setDb] = useState(null);
+    const [auth, setAuth] = useState(null);
     const [userId, setUserId] = useState(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -48,7 +60,6 @@ const App = () => {
 
     // --- Utility Functions ---
 
-    // Function to show a temporary message toast
     const showTemporaryMessage = (msg, duration = 4000) => {
         setMessage(msg);
         setShowMessage(true);
@@ -58,113 +69,77 @@ const App = () => {
         }, duration);
     };
     
-    // Enhanced error handler to detect client-side blocking.
     const handleFirebaseError = (error, operation) => {
         console.error(`Firebase Error during ${operation}:`, error);
-        if (error.message.includes('ERR_BLOCKED_BY_CLIENT')) {
-            showTemporaryMessage(`Connection to database was blocked. Please disable ad blockers or privacy extensions and refresh the page.`, 8000);
-        } else {
-            showTemporaryMessage(`Error during ${operation}: ${error.message}`);
-        }
+        showTemporaryMessage(`Error during ${operation}: ${error.message}`);
     };
 
     // --- Firebase Initialization and Data Fetching ---
 
-    // Effect for one-time Firebase service setup and authentication
     useEffect(() => {
-        let unsubscribe = () => {}; // Start with a no-op function
-
-        // **UPGRADE:** More robust initialization flow to ensure persistence is set
-        // before any authentication state is checked.
-        const initializeFirebase = async () => {
-            console.log("Firebase: Starting initialization and authentication process...");
-            try {
-                const firebaseConfig = {
-                  apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
-                  authDomain: "dasara-pass-data.firebaseapp.com",
-                  projectId: "dasara-pass-data",
-                  storageBucket: "dasara-pass-data.appspot.com",
-                  messagingSenderId: "1055205777690",
-                  appId: "1:1055205777690:web:82e0c017de7bd19ccb8ca3",
-                  measurementId: "G-3XK1S6GG0M"
-                };
-
-                if (!firebaseConfig.apiKey) {
-                    console.error("Firebase API Key is missing.");
-                    showTemporaryMessage("Application is not configured correctly.");
-                    setIsLoading(false);
-                    return;
-                }
-
-                const app = initializeApp(firebaseConfig);
-                const authInstance = getAuth(app);
-                const dbInstance = getFirestore(app);
-                
-                setDb(dbInstance);
-
-                console.log("Firebase: Setting auth persistence to 'local'...");
-                await setPersistence(authInstance, browserLocalPersistence);
-                console.log("Firebase: Auth persistence has been set. Attaching auth state listener.");
-                
-                // This listener now waits for the SDK to check for a saved user.
-                unsubscribe = onAuthStateChanged(authInstance, (user) => {
-                    if (user) {
-                        // This will run if a user is found in the browser's storage,
-                        // or after a new anonymous user is created.
-                        console.log("Firebase: onAuthStateChanged fired. User FOUND with UID:", user.uid);
-                        setUserId(user.uid);
-                        setIsAuthReady(true);
-                    } else {
-                        // This should now only run on the very first visit,
-                        // or if browser data is cleared.
-                        console.log("Firebase: onAuthStateChanged fired. User NOT found. Signing in anonymously...");
-                        signInAnonymously(authInstance).catch((error) => {
-                            handleFirebaseError(error, "initial anonymous sign-in");
-                        });
-                    }
-                });
-
-            } catch (error) {
-                handleFirebaseError(error, "Firebase initialization");
+        let unsubscribe = () => {}; 
+        
+        try {
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase config is missing.");
+                showTemporaryMessage("Application is not configured correctly.");
                 setIsLoading(false);
+                return;
             }
-        };
 
-        initializeFirebase();
+            const app = initializeApp(firebaseConfig);
+            const authInstance = getAuth(app);
+            const dbInstance = getFirestore(app);
+            
+            setDb(dbInstance);
+            setAuth(authInstance);
 
-        // This cleanup function will run when the component unmounts.
+            unsubscribe = onAuthStateChanged(authInstance, (user) => {
+                if (user) {
+                    console.log("Firebase: User is signed in with UID:", user.uid);
+                    setUserId(user.uid);
+                    setIsAuthReady(true);
+                } else {
+                    console.log("Firebase: No user signed in. Signing in anonymously.");
+                    signInAnonymously(authInstance).catch((error) => {
+                        handleFirebaseError(error, "anonymous sign-in");
+                    });
+                }
+            });
+
+        } catch (error) {
+            handleFirebaseError(error, "Firebase initialization");
+            setIsLoading(false);
+        }
+
         return () => {
             console.log("Firebase: Cleaning up auth listener.");
             unsubscribe();
         };
-    }, []); // The empty dependency array ensures this runs only once.
+    }, []); 
 
-    // Effect for setting up real-time Firestore listeners once auth is ready
     useEffect(() => {
         if (!isAuthReady || !db || !userId) {
             console.log("Skipping Firestore listeners: Firebase not fully ready.");
             return;
         }
         
-        const projectId = db.app.options.projectId;
-        console.log(`Setting up Firestore listeners for project '${projectId}' and user '${userId}'`);
+        console.log(`Setting up Firestore listeners for app '${appId}' and user '${userId}'`);
         setIsLoading(true);
 
-        const entriesCollectionRef = collection(db, `artifacts/${projectId}/users/${userId}/passEntries`);
+        const entriesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/passEntries`);
         const unsubscribeEntries = onSnapshot(entriesCollectionRef, (snapshot) => {
             const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setPassEntries(entries);
             console.log("Firestore: Pass entries updated.");
         }, (error) => handleFirebaseError(error, "fetching entries"));
 
-        const totalsDocRef = doc(db, `artifacts/${projectId}/users/${userId}/passTotals/summary`);
+        const totalsDocRef = doc(db, `artifacts/${appId}/users/${userId}/passTotals/summary`);
         const unsubscribeTotals = onSnapshot(totalsDocRef, async (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
-                const palaceTotals = Array.isArray(data.palaceTotals) ? data.palaceTotals : [];
-                const torchlightTotals = Array.isArray(data.torchlightTotals) ? data.torchlightTotals : [];
-                setPalaceTotalPasses([...palaceTotals, ...Array(16).fill(0)].slice(0, 16));
-                setTorchlightTotalPasses([...torchlightTotals, ...Array(16).fill(0)].slice(0, 16));
+                setPalaceTotalPasses(Array.isArray(data.palaceTotals) ? [...data.palaceTotals, ...Array(16).fill(0)].slice(0, 16) : Array(16).fill(0));
+                setTorchlightTotalPasses(Array.isArray(data.torchlightTotals) ? [...data.torchlightTotals, ...Array(16).fill(0)].slice(0, 16) : Array(16).fill(0));
                 console.log("Firestore: Total passes summary updated.");
             } else {
                 console.log("Firestore: Total passes document not found. Initializing...");
@@ -191,31 +166,27 @@ const App = () => {
             unsubscribeTotals();
             console.log("Firestore: Listeners unsubscribed.");
         };
-    }, [isAuthReady, db, userId]);
+    }, [isAuthReady, db, userId, appId]);
 
 
     // --- Data Calculation ---
+    // Calculate distributed passes directly. This avoids the "access before initialization" error.
+    const distributedPalace = Array(16).fill(0);
+    const distributedTorchlight = Array(16).fill(0);
 
-    const { distributedPalace, balancePalace, distributedTorchlight, balanceTorchlight } = React.useMemo(() => {
-        const distPalace = Array(16).fill(0);
-        const distTorchlight = Array(16).fill(0);
-
-        passEntries.forEach(entry => {
-            (entry.palaceGates || []).forEach((gateNum, index) => {
-                const pCount = parseInt((entry.palacePassesPerGate || [])[index]) || 0;
-                if (gateNum >= 1 && gateNum <= 16) distPalace[gateNum - 1] += pCount;
-            });
-            (entry.torchlightGates || []).forEach((gateNum, index) => {
-                const tCount = parseInt((entry.torchlightPassesPerGate || [])[index]) || 0;
-                if (gateNum >= 17 && gateNum <= 32) distTorchlight[gateNum - 17] += tCount;
-            });
+    passEntries.forEach(entry => {
+        (entry.palaceGates || []).forEach((gateNum, index) => {
+            const pCount = parseInt((entry.palacePassesPerGate || [])[index]) || 0;
+            if (gateNum >= 1 && gateNum <= 16) distributedPalace[gateNum - 1] += pCount;
         });
+        (entry.torchlightGates || []).forEach((gateNum, index) => {
+            const tCount = parseInt((entry.torchlightPassesPerGate || [])[index]) || 0;
+            if (gateNum >= 17 && gateNum <= 32) distributedTorchlight[gateNum - 17] += tCount;
+        });
+    });
 
-        const balPalace = palaceTotalPasses.map((total, i) => total - distPalace[i]);
-        const balTorchlight = torchlightTotalPasses.map((total, i) => total - distTorchlight[i]);
-
-        return { distributedPalace: distPalace, balancePalace: balPalace, distributedTorchlight: distTorchlight, balanceTorchlight: balTorchlight };
-    }, [passEntries, palaceTotalPasses, torchlightTotalPasses]);
+    const balancePalace = palaceTotalPasses.map((total, i) => total - distributedPalace[i]);
+    const balanceTorchlight = torchlightTotalPasses.map((total, i) => total - distributedTorchlight[i]);
 
 
     // --- Event Handlers ---
@@ -284,8 +255,7 @@ const App = () => {
 
         setIsLoading(true);
         try {
-            const projectId = db.app.options.projectId;
-            const collectionRef = collection(db, `artifacts/${projectId}/users/${userId}/passEntries`);
+            const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/passEntries`);
             if (editingEntryId) {
                 await setDoc(doc(collectionRef, editingEntryId), entryData);
                 showTemporaryMessage("Entry updated successfully!");
@@ -329,8 +299,7 @@ const App = () => {
         if (!db || !userId || !entryToDeleteId) return;
         setIsLoading(true);
         try {
-            const projectId = db.app.options.projectId;
-            await deleteDoc(doc(db, `artifacts/${projectId}/users/${userId}/passEntries`, entryToDeleteId));
+            await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/passEntries`, entryToDeleteId));
             showTemporaryMessage("Entry deleted successfully!");
         } catch (error) {
             handleFirebaseError(error, "deleting entry");
@@ -354,12 +323,11 @@ const App = () => {
         const value = parseInt(editTotalValue);
         if (isNaN(value) || value < 0) return showTemporaryMessage("Please enter a valid non-negative number.");
 
-        const distributedCount = editTotalType === 'palace' ? distributedPalace[editTotalGateIndex] : torchlightTotalPasses[editTotalGateIndex];
+        const distributedCount = editTotalType === 'palace' ? distributedPalace[editTotalGateIndex] : distributedTorchlight[editTotalGateIndex];
         if (value < distributedCount) return showTemporaryMessage(`Cannot set total to ${value}. Already distributed ${distributedCount}.`);
 
         setIsLoading(true);
-        const projectId = db.app.options.projectId;
-        const totalsDocRef = doc(db, `artifacts/${projectId}/users/${userId}/passTotals/summary`);
+        const totalsDocRef = doc(db, `artifacts/${appId}/users/${userId}/passTotals/summary`);
         const newTotals = {
             palaceTotals: [...palaceTotalPasses],
             torchlightTotals: [...torchlightTotalPasses],
@@ -371,7 +339,7 @@ const App = () => {
         }
 
         try {
-            await setDoc(totalsDocRef, newTotals);
+            await setDoc(totalsDocRef, newTotals, { merge: true });
             showTemporaryMessage("Total passes updated successfully!");
         } catch (error) {
             handleFirebaseError(error, "updating totals");
@@ -394,12 +362,12 @@ const App = () => {
             {showMessage && <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all">{message}</div>}
 
             <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">MYSURU DASARA PASSES DISTRIBUTION 2025</h1>
-            {userId && <div className="bg-blue-100 text-blue-800 p-2 rounded-md mb-6 text-xs">Persistent User ID: <span className="font-mono">{userId}</span></div>}
+            {userId && <div className="bg-blue-100 text-blue-800 p-2 rounded-md mb-6 text-xs break-all">Session ID: <span className="font-mono">{userId}</span></div>}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-screen-2xl">
                 <div className="bg-white p-6 rounded-lg shadow-lg">
                     <h2 className={sectionTitleStyle}>Input Section</h2>
-                    {isLoading && <div className="text-center text-blue-600 p-4">Loading Data...</div>}
+                    {isLoading && !isAuthReady && <div className="text-center text-blue-600 p-4">Connecting to Database...</div>}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="recipientName" className={labelStyle}>Recipient Name</label>
@@ -448,7 +416,7 @@ const App = () => {
                             </div>
                         </div>
                     </div>
-                    <button onClick={handleSave} className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400" disabled={isLoading}>
+                    <button onClick={handleSave} className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400" disabled={!isAuthReady || isLoading}>
                         {isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}
                     </button>
                     {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Cancel Edit</button>}
@@ -482,6 +450,7 @@ const App = () => {
                                         </tr>
                                     ))}
                                     {passEntries.length === 0 && !isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">No records found.</td></tr>}
+                                    {isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">Loading records...</td></tr>}
                                 </tbody>
                             </table>
                         </div>
