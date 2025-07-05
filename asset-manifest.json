@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/dasara_pass_distribution_system/static/css/main.e6c13ad2.css",
-    "main.js": "/dasara_pass_distribution_system/static/js/main.ff29d749.js",
+    "main.js": "/dasara_pass_distribution_system/static/js/main.1d045757.js",
     "index.html": "/dasara_pass_distribution_system/index.html",
     "main.e6c13ad2.css.map": "/dasara_pass_distribution_system/static/css/main.e6c13ad2.css.map",
-    "main.ff29d749.js.map": "/dasara_pass_distribution_system/static/js/main.ff29d749.js.map"
+    "main.1d045757.js.map": "/dasara_pass_distribution_system/static/js/main.1d045757.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.ff29d749.js"
+    "static/js/main.1d045757.js"
   ]
 }
