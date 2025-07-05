@@ -50,7 +50,7 @@ const SummaryTable = ({ title, type, gates, totals, distributed, balance, onEdit
                 <table className="min-w-full divide-y divide-gray-200 text-center border">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className={`${tableHeaderStyle} w-10`}>Sl.</th><th className={`${tableHeaderStyle} w-40`}>{title}</th>
+                            <th className={`${tableHeaderStyle} w-10`}>Sl.</th><th className={`${tableHeaderStyle} w-32`}>{title}</th>
                             {gates.map((gate) => <th key={gate} className={tableHeaderStyle}>{gate}</th>)}
                         </tr>
                     </thead>
@@ -408,8 +408,8 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                 </div>
             </header>
             <main className="w-full max-w-screen-2xl mx-auto flex-1 flex flex-col gap-4 overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col lg:col-span-2">
                         <div className="flex-1 overflow-y-auto pr-2">
                             <h2 className={sectionTitleStyle}>Input Section</h2>
                             <div className="flex flex-col gap-3">
@@ -438,7 +438,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                         <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
                         {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto min-w-0">
+                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto min-w-0 lg:col-span-3">
                         <h2 className={sectionTitleStyle}>Records Table</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
