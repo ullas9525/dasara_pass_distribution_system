@@ -72,9 +72,12 @@ const App = () => {
 
     // Effect for one-time Firebase service setup and authentication
     useEffect(() => {
-        // **UPGRADE:** Wrap initialization in an async function to handle persistence.
+        let unsubscribe = () => {}; // Start with a no-op function
+
+        // **UPGRADE:** More robust initialization flow to ensure persistence is set
+        // before any authentication state is checked.
         const initializeFirebase = async () => {
-            console.log("Firebase: Initializing services...");
+            console.log("Firebase: Starting initialization and authentication process...");
             try {
                 const firebaseConfig = {
                   apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
@@ -97,29 +100,30 @@ const App = () => {
                 const authInstance = getAuth(app);
                 const dbInstance = getFirestore(app);
                 
-                // **UPGRADE:** This line tells Firebase to save the user's session.
-                // When you return, you'll be the same user.
-                await setPersistence(authInstance, browserLocalPersistence);
-                
                 setDb(dbInstance);
 
-                const unsubscribe = onAuthStateChanged(authInstance, (user) => {
+                console.log("Firebase: Setting auth persistence to 'local'...");
+                await setPersistence(authInstance, browserLocalPersistence);
+                console.log("Firebase: Auth persistence has been set. Attaching auth state listener.");
+                
+                // This listener now waits for the SDK to check for a saved user.
+                unsubscribe = onAuthStateChanged(authInstance, (user) => {
                     if (user) {
-                        // This will now run every time you open the app, with the same user ID.
-                        console.log("Firebase: User is signed in with persistent UID:", user.uid);
+                        // This will run if a user is found in the browser's storage,
+                        // or after a new anonymous user is created.
+                        console.log("Firebase: onAuthStateChanged fired. User FOUND with UID:", user.uid);
                         setUserId(user.uid);
                         setIsAuthReady(true);
                     } else {
-                        // This will only run on the very first visit to create your persistent user.
-                        console.log("Firebase: No persistent user. Signing in anonymously for the first time...");
+                        // This should now only run on the very first visit,
+                        // or if browser data is cleared.
+                        console.log("Firebase: onAuthStateChanged fired. User NOT found. Signing in anonymously...");
                         signInAnonymously(authInstance).catch((error) => {
                             handleFirebaseError(error, "initial anonymous sign-in");
                         });
                     }
                 });
 
-                // Note: The 'unsubscribe' function for cleanup is implicitly returned
-                // if we were to need it, but since this runs once, it's okay.
             } catch (error) {
                 handleFirebaseError(error, "Firebase initialization");
                 setIsLoading(false);
@@ -127,6 +131,12 @@ const App = () => {
         };
 
         initializeFirebase();
+
+        // This cleanup function will run when the component unmounts.
+        return () => {
+            console.log("Firebase: Cleaning up auth listener.");
+            unsubscribe();
+        };
     }, []); // The empty dependency array ensures this runs only once.
 
     // Effect for setting up real-time Firestore listeners once auth is ready
@@ -549,4 +559,4 @@ const App = () => {
     );
 };
 
-export default App;
+export default A
