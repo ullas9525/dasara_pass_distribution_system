@@ -26,7 +26,7 @@ const SingleSelectDropdown = ({ options, selectedOption, onChange, label, disabl
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button type="button" onClick={handleToggle} disabled={disabled} className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 text-left disabled:bg-gray-200 disabled:cursor-not-allowed flex justify-between items-center">
+            <button type="button" onClick={handleToggle} disabled={disabled} className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 text-left disabled:bg-gray-200 disabled:cursor-not-allowed flex justify-between items-center h-10">
                 <span className="truncate">{displayValue}</span>
                 <svg className={`w-5 h-5 ml-2 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
             </button>
@@ -57,7 +57,7 @@ const SummaryTable = ({ title, type, gates, totals, distributed, balance, onEdit
                     <tbody className="divide-y divide-gray-200">
                         <tr>
                             <td className={tableCellStyle}>1</td><td className={`${tableCellStyle} text-left font-medium`}>Total Passes</td>
-                            {totals.map((val, i) => <td key={i} className={tableCellStyle}>{val}<button onClick={() => onEdit(type, i)} className="ml-1 text-blue-500 text-xs">[E]</button></td>)}
+                            {totals.map((val, i) => <td key={i} className={tableCellStyle}>{val}<button onClick={() => onEdit(type, i)} className="ml-1 text-blue-500 hover:text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button></td>)}
                         </tr>
                         <tr>
                             <td className={tableCellStyle}>2</td><td className={`${tableCellStyle} text-left font-medium`}>Distributed</td>
@@ -141,6 +141,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const settingsRef = useRef(null);
+    const editTotalInputRef = useRef(null);
     
     const firebaseConfig = {
       apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
@@ -200,6 +201,12 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         return () => { unsubscribeEntries(); unsubscribeTotals(); };
     }, [isAuthReady, db, userId, appId]);
 
+    useEffect(() => {
+        if (showEditTotalModal && editTotalInputRef.current) {
+            editTotalInputRef.current.select();
+        }
+    }, [showEditTotalModal]);
+
     const distributedPalace = Array(15).fill(0);
     const distributedTorchlight = Array(15).fill(0);
     passEntries.forEach(entry => {
@@ -224,9 +231,13 @@ const HomePage = ({ onLogout, onChangePassword }) => {
 
     const handleSave = async () => {
         if (!db || !userId) return;
+        if (recipientMobile && recipientMobile.length !== 10) return showTemporaryMessage("Recipient mobile must be 10 digits.");
+        if (messengerMobile && messengerMobile.length !== 10) return showTemporaryMessage("Messenger mobile must be 10 digits.");
+        
         const count = parseInt(passCount);
         if (!recipientName || !passCategory) return showTemporaryMessage("Recipient Name and a Pass Category are required.");
         if (!gateSelected || !passCount || isNaN(count) || count <= 0) return showTemporaryMessage("A gate and a valid pass count are required.");
+        
         const gateNumeric = GATES.indexOf(gateSelected) + 1;
         const gatesNumeric = [gateNumeric]; const counts = [count];
         const tempDistributed = { palace: [...distributedPalace], torchlight: [...distributedTorchlight] };
@@ -348,6 +359,20 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         });
     };
 
+    const handleMobileChange = (e, setter) => {
+        const value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 10) {
+            setter(value);
+        }
+    };
+
+    const handleModalKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSaveTotalPasses();
+        }
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (settingsRef.current && !settingsRef.current.contains(event.target)) {
@@ -361,7 +386,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const sectionTitleStyle = "text-xl font-semibold text-gray-800 mb-2 border-b pb-2";
     const formRowStyle = "flex items-center gap-2";
     const labelStyle = "w-24 text-right text-sm font-medium text-gray-700 flex-shrink-0";
-    const inputStyle = "p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50";
+    const inputStyle = "p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 h-10";
     const tableHeaderStyle = "px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
     const tableCellStyle = "px-2 py-1 whitespace-nowrap text-sm text-gray-800";
 
@@ -384,33 +409,34 @@ const HomePage = ({ onLogout, onChangePassword }) => {
             </header>
             <main className="w-full max-w-screen-2xl mx-auto flex-1 flex flex-col gap-4 overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow-lg">
-                        <h2 className={sectionTitleStyle}>Input Section</h2>
-                        {isLoading && !isAuthReady && <div className="text-center text-blue-600 p-4">Connecting to Database...</div>}
-                        <div className="flex flex-col gap-3">
-                            <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
-                            <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
-                            <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => setRecipientMobile(e.target.value)} /></div>
-                            <div className={`${formRowStyle} flex-wrap`}>
-                                <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-24 text-right">Category ::</label>
-                                <div className="flex gap-4 py-2">
-                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Palace</span></label>
-                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Torchlight</span></label>
+                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
+                        <div className="flex-1 overflow-y-auto pr-2">
+                            <h2 className={sectionTitleStyle}>Input Section</h2>
+                            <div className="flex flex-col gap-3">
+                                <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
+                                <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
+                                <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => handleMobileChange(e, setRecipientMobile)} maxLength="10" /></div>
+                                <div className={`${formRowStyle} flex-wrap`}>
+                                    <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-24 text-right">Category ::</label>
+                                    <div className="flex gap-4 py-2">
+                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Palace</span></label>
+                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Torchlight</span></label>
+                                    </div>
+                                    <div className="flex-1 min-w-[120px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label="Gate" disabled={!passCategory} /></div>
+                                    <div className="w-28"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder="Passes" min="1" disabled={!passCategory} /></div>
                                 </div>
-                                <div className="flex-1 min-w-[120px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label="Gate" disabled={!passCategory} /></div>
-                                <div className="w-28"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder="Passes" min="1" disabled={!passCategory} /></div>
-                            </div>
-                            <div className="border-t pt-3 mt-3">
-                                <h3 className="text-md font-semibold text-gray-700 mb-3">Messenger Details</h3>
-                                <div className="flex flex-col gap-3">
-                                    <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
-                                    <div className={formRowStyle}><label className={labelStyle}>Designation ::</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
-                                    <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => setMessengerMobile(e.target.value)} /></div>
+                                <div className="border-t pt-3 mt-3">
+                                    <h3 className="text-md font-semibold text-gray-700 mb-3">Messenger Details</h3>
+                                    <div className="flex flex-col gap-3">
+                                        <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
+                                        <div className={formRowStyle}><label className={labelStyle}>Designation ::</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
+                                        <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => handleMobileChange(e, setMessengerMobile)} maxLength="10" /></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
-                        {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Cancel Edit</button>}
+                        <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
+                        {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto">
                         <h2 className={sectionTitleStyle}>Records Table</h2>
@@ -442,7 +468,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                     <SummaryTable title="Torchlight Summary" type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} />
                 </div>
             </main>
-            {showEditTotalModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Edit Total for Gate {GATES[editTotalGateIndex]}</h3><input type="number" className={inputStyle} value={editTotalValue} onChange={(e) => setEditTotalValue(e.target.value)} min="0" /><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowEditTotalModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={handleSaveTotalPasses} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>}
+            {showEditTotalModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Edit Total for Gate {GATES[editTotalGateIndex]}</h3><input type="number" ref={editTotalInputRef} className={inputStyle} value={editTotalValue} onChange={(e) => setEditTotalValue(e.target.value)} min="0" onKeyDown={handleModalKeyDown} /><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowEditTotalModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={handleSaveTotalPasses} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>}
             {showConfirmDeleteModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Confirm Deletion</h3><p className="text-gray-700 mb-6">Are you sure you want to delete this entry? This cannot be undone.</p><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowConfirmDeleteModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button></div></div></div>}
             {showChangePasswordModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Change Password</h3><form onSubmit={handleChangePasswordSubmit}><div className="space-y-4"><input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputStyle} required /><input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputStyle} required /></div><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowChangePasswordModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Change</button></div></form></div></div>}
         </div>
@@ -479,7 +505,11 @@ const App = () => {
     const handleLogin = (email, password) => {
         signInWithEmailAndPassword(auth, email, password)
             .catch((error) => {
-                setError(error.message);
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    setError("Invalid email or password.");
+                } else {
+                    setError("An error occurred during login. Please try again.");
+                }
             });
     };
 
