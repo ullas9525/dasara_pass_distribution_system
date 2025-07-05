@@ -391,7 +391,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const tableCellStyle = "px-2 py-1 whitespace-nowrap text-sm text-gray-800";
 
     return (
-        <div className="h-screen bg-gray-50 p-2 font-sans flex flex-col items-center">
+        <div className="min-h-screen bg-gray-50 p-2 font-sans flex flex-col items-center">
             {showMessage && <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all">{message}</div>}
              <header className="w-full max-w-screen-2xl mx-auto flex-shrink-0 flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center flex-1">MYSURU DASARA PASSES DISTRIBUTION 2025</h1>
@@ -438,7 +438,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                         <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
                         {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto">
+                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto min-w-0">
                         <h2 className={sectionTitleStyle}>Records Table</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
@@ -463,7 +463,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                         </div>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-lg flex-1 overflow-y-auto">
+                <div className="bg-white p-4 rounded-lg shadow-lg flex-1 overflow-y-auto min-w-0">
                     <SummaryTable title="Palace Summary" type="palace" gates={GATES} totals={palaceTotalPasses} distributed={distributedPalace} balance={balancePalace} onEdit={handleEditTotalPasses} />
                     <SummaryTable title="Torchlight Summary" type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} />
                 </div>
