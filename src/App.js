@@ -3,6 +3,86 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
 import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 
+// --- i18n Translations ---
+const translations = {
+  // General
+  login: { en: 'Login', kn: 'ಲಾಗಿನ್', hi: 'लॉग इन करें' },
+  logout: { en: 'Logout', kn: 'ಲಾಗ್ ಔಟ್', hi: 'लॉग आउट' },
+  changePassword: { en: 'Change Password', kn: 'ಪಾಸ್ವರ್ಡ್ ಬದಲಾಯಿಸಿ', hi: 'पासवर्ड बदलें' },
+  language: { en: 'Language', kn: 'ಭಾಷೆ', hi: 'भाषा' },
+  // Login Page
+  emailAddress: { en: 'Email address', kn: 'ಇಮೇಲ್ ವಿಳಾಸ', hi: 'ईमेल पता' },
+  enterYourEmail: { en: 'Enter your email', kn: 'ನಿಮ್ಮ ಇಮೇಲ್ ನಮೂದಿಸಿ', hi: 'अपना ईमेल दर्ज करें' },
+  password: { en: 'Password', kn: 'ಪಾಸ್ವರ್ಡ್', hi: 'पासवर्ड' },
+  enterYourPassword: { en: 'Enter your password', kn: 'ನಿಮ್ಮ ಪಾಸ್ವರ್ಡ್ ನಮೂದಿಸಿ', hi: 'अपना पासवर्ड दर्ज करें' },
+  signIn: { en: 'Sign in', kn: 'ಸೈನ್ ಇನ್ ಮಾಡಿ', hi: 'साइन इन करें' },
+  // Home Page - Header
+  pageTitle: { en: 'MYSURU DASARA PASSES DISTRIBUTION 2025', kn: 'ಮೈಸೂರು ದಸರಾ ಪಾಸ್ ವಿತರಣೆ ೨೦೨೫', hi: 'मैसूरु दशहरा पास वितरण २०२५' },
+  // Home Page - Input Section
+  inputSection: { en: 'Input Section', kn: 'ಇನ್ಪುಟ್ ವಿಭಾಗ', hi: 'इनपुट अनुभाग' },
+  nameLabel: { en: 'Name ::', kn: 'ಹೆಸರು ::', hi: 'नाम ::' },
+  officeLabel: { en: 'Office ::', kn: 'ಕಚೇರಿ ::', hi: 'कार्यालय ::' },
+  mobileLabel: { en: 'Mobile ::', kn: 'ಮೊಬೈಲ್ ::', hi: 'मोबाइल ::' },
+  categoryLabel: { en: 'Category ::', kn: 'ವರ್ಗ ::', hi: 'श्रेणी ::' },
+  palace: { en: 'Palace', kn: 'ಅರಮನೆ', hi: 'महल' },
+  torchlight: { en: 'Torchlight', kn: 'ಪಂಜಿನ ಕವಾಯತು', hi: 'टॉर्चलाइट' },
+  chooseGate: { en: 'Choose Gate...', kn: 'ಗೇಟ್ ಆಯ್ಕೆಮಾಡಿ...', hi: 'गेट चुनें...' },
+  passesPlaceholder: { en: 'Passes', kn: 'ಪಾಸ್ಗಳು', hi: 'पास' },
+  messengerDetails: { en: 'Messenger Details', kn: 'ಮೆಸೆಂಜರ್ ವಿವರಗಳು', hi: 'मैसेंजर विवरण' },
+  designationLabel: { en: 'Designation ::', kn: 'ಹುದ್ದೆ ::', hi: 'पदनाम ::' },
+  saveEntry: { en: 'Save Entry', kn: 'ನಮೂದನ್ನು ಉಳಿಸಿ', hi: 'प्रविष्टि सहेजें' },
+  updateEntry: { en: 'Update Entry', kn: 'ನಮೂದನ್ನು ನವೀಕರಿಸಿ', hi: 'प्रविष्टि अद्यतन करें' },
+  cancelEdit: { en: 'Cancel Edit', kn: 'ಸಂಪಾದನೆಯನ್ನು ರದ್ದುಮಾಡಿ', hi: 'संपादन रद्द करें' },
+  processing: { en: 'Processing...', kn: 'ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲಾಗುತ್ತಿದೆ...', hi: 'प्रसंस्करण हो रहा है...' },
+  // Home Page - Records Table
+  recordsTable: { en: 'Records Table', kn: 'ದಾಖಲೆಗಳ ಟೇಬಲ್', hi: 'रिकॉर्ड्स तालिका' },
+  recordsTable_Name: { en: 'Name', kn: 'ಹೆಸರು', hi: 'नाम' },
+  recordsTable_Palace: { en: 'Palace', kn: 'ಅರಮನೆ', hi: 'महल' },
+  recordsTable_Torchlight: { en: 'Torchlight', kn: 'ಪಂಜಿನ ಕವಾಯತು', hi: 'टॉर्चलाइट' },
+  recordsTable_Total: { en: 'Total', kn: 'ಒಟ್ಟು', hi: 'कुल' },
+  recordsTable_Actions: { en: 'Actions', kn: 'ಕ್ರಿಯೆಗಳು', hi: 'कार्रवाइयां' },
+  edit: { en: 'Edit', kn: 'ಸಂಪಾದಿಸಿ', hi: 'संपादित करें' },
+  delete: { en: 'Delete', kn: 'ಅಳಿಸಿ', hi: 'हटाएं' },
+  noRecordsFound: { en: 'No records found.', kn: 'ಯಾವುದೇ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.', hi: 'कोई रिकॉर्ड नहीं मिला।' },
+  loadingRecords: { en: 'Loading records...', kn: 'ದಾಖಲೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...', hi: 'रिकॉर्ड लोड हो रहे हैं...' },
+  export: { en: 'Export', kn: 'ರಫ್ತು ಮಾಡಿ', hi: 'निर्यात' },
+  exportAsPDF: { en: 'Export as PDF', kn: 'PDF ಆಗಿ ರಫ್ತು ಮಾಡಿ', hi: 'पीडीएफ के रूप में निर्यात करें' },
+  exportAsExcel: { en: 'Export as Excel', kn: 'Excel ಆಗಿ ರಫ್ತು ಮಾಡಿ', hi: 'एक्सेल के रूप में निर्यात करें' },
+  exportAsDOC: { en: 'Export as DOC', kn: 'DOC ಆಗಿ ರಫ್ತು ಮಾಡಿ', hi: 'डीओसी के रूप में निर्यात करें' },
+  // Home Page - Summary Tables
+  palaceSummary: { en: 'Palace Summary', kn: 'ಅರಮನೆ ಸಾರಾಂಶ', hi: 'महल सारांश' },
+  torchlightSummary: { en: 'Torchlight Summary', kn: 'ಪಂಜಿನ ಕವಾಯತು ಸಾರಾಂಶ', hi: 'टॉर्चलाइट सारांश' },
+  totalPasses: { en: 'Total Passes', kn: 'ಒಟ್ಟು ಪಾಸ್ಗಳು', hi: 'कुल पास' },
+  distributed: { en: 'Distributed', kn: 'ವಿತರಿಸಲಾಗಿದೆ', hi: 'वितरित' },
+  balance: { en: 'Balance', kn: 'ಬಾಕಿ', hi: 'शेष' },
+  total: { en: 'Total', kn: 'ಒಟ್ಟು', hi: 'कुल' },
+  // Modals
+  editTotalForGate: { en: 'Edit Total for Gate', kn: 'ಗೇಟ್\u200cಗಾಗಿ ಒಟ್ಟು ಸಂಪಾದಿಸಿ', hi: 'गेट के लिए कुल संपादित करें' },
+  save: { en: 'Save', kn: 'ಉಳಿಸಿ', hi: 'सहेजें' },
+  cancel: { en: 'Cancel', kn: 'ರದ್ದುಮಾಡಿ', hi: 'रद्द करें' },
+  confirmDeletion: { en: 'Confirm Deletion', kn: 'ಅಳಿಸುವಿಕೆಯನ್ನು ಖಚಿತಪಡಿಸಿ', hi: 'हटाने की पुष्टि करें' },
+  confirmDeletionMessage: { en: 'Are you sure you want to delete this entry? This cannot be undone.', kn: 'ಈ ನಮೂದನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ಇದನ್ನು ಹಿಂಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.', hi: 'क्या आप वाकई इस प्रविष्टि को हटाना चाहते हैं? यह पूर्ववत नहीं किया जा सकता।' },
+  newPassword: { en: 'New Password', kn: 'ಹೊಸ ಪಾಸ್ವರ್ಡ್', hi: 'नया पासवर्ड' },
+  confirmNewPassword: { en: 'Confirm New Password', kn: 'ಹೊಸ ಪಾಸ್ವರ್ಡ್ ಅನ್ನು ಖಚಿತಪಡಿಸಿ', hi: 'नए पासवर्ड की पुष्टि करें' },
+  change: { en: 'Change', kn: 'ಬದಲಾಯಿಸಿ', hi: 'बदलें' },
+  // Messages
+  mobileDigitsError: { en: 'Mobile must be 10 digits.', kn: 'ಮೊಬೈಲ್ 10 ಅಂಕೆಗಳನ್ನು ಹೊಂದಿರಬೇಕು.', hi: 'मोबाइल 10 अंकों का होना चाहिए।' },
+  nameAndCategoryError: { en: 'Recipient Name and a Pass Category are required.', kn: 'ಸ್ವೀಕರಿಸುವವರ ಹೆಸರು ಮತ್ತು ಪಾಸ್ ವರ್ಗದ ಅಗತ್ಯವಿದೆ.', hi: 'प्राप्तकर्ता का नाम और पास श्रेणी आवश्यक है।' },
+  gateAndCountError: { en: 'A gate and a valid pass count are required.', kn: 'ಗೇಟ್ ಮತ್ತು ಮಾನ್ಯವಾದ ಪಾಸ್ ಎಣಿಕೆ ಅಗತ್ಯವಿದೆ.', hi: 'एक गेट और एक वैध पास गणना आवश्यक है।' },
+  notEnoughPassesError: { en: 'Not enough passes for', kn: 'ಗೆ ಸಾಕಷ್ಟು ಪಾಸ್\u200cಗಳಿಲ್ಲ', hi: 'के लिए पर्याप्त पास नहीं हैं' },
+  entryUpdatedSuccess: { en: 'Entry updated successfully!', kn: 'ನಮೂದನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'प्रविष्टि सफलतापूर्वक अद्यतन की गई!' },
+  entrySavedSuccess: { en: 'Entry saved successfully!', kn: 'ನಮೂದನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ!', hi: 'प्रविष्टि सफलतापूर्वक सहेजी गई!' },
+  entryDeletedSuccess: { en: 'Entry deleted successfully!', kn: 'ನಮೂದನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ!', hi: 'प्रविष्टि सफलतापूर्वक हटा दी गई!' },
+  totalPassesUpdatedSuccess: { en: 'Total passes updated successfully!', kn: 'ಒಟ್ಟು ಪಾಸ್\u200cಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!', hi: 'कुल पास सफलतापूर्वक अद्यतन किए गए!' },
+  validNumberError: { en: 'Please enter a valid non-negative number.', kn: 'ದಯವಿಟ್ಟು ಮಾನ್ಯವಾದ ಋಣಾತ್ಮಕವಲ್ಲದ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.', hi: 'कृपया एक वैध गैर-नकारात्मक संख्या दर्ज करें।' },
+  cannotSetTotalError: { en: 'Cannot set total to', kn: 'ಒಟ್ಟು ಮೊತ್ತವನ್ನು ಹೊಂದಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ', hi: 'कुल सेट नहीं किया जा सकता' },
+  alreadyDistributed: { en: 'Already distributed', kn: 'ಈಗಾಗಲೇ ವಿತರಿಸಲಾಗಿದೆ', hi: 'पहले से ही वितरित' },
+  passwordsDoNotMatch: { en: 'Passwords do not match.', kn: 'ಪಾಸ್ವರ್ಡ್\u200cಗಳು ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ.', hi: 'पासवर्ड मेल नहीं खाते।' },
+  passwordLengthError: { en: 'Password should be at least 6 characters.', kn: 'ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ 6 ಅಕ್ಷರಗಳನ್ನು ಹೊಂದಿರಬೇಕು.', hi: 'पासवर्ड कम से कम 6 वर्णों का होना चाहिए।' },
+  passwordChangedSuccess: { en: 'Password changed successfully!', kn: 'ಪಾಸ್ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ಬದಲಾಯಿಸಲಾಗಿದೆ!', hi: 'पासवर्ड सफलतापूर्वक बदल दिया गया!' },
+  editingEntryMessage: { en: "Editing entry. Make changes and click 'Update Entry'.", kn: "ನಮೂದನ್ನು ಸಂಪಾದಿಸಲಾಗುತ್ತಿದೆ. ಬದಲಾವಣೆಗಳನ್ನು ಮಾಡಿ ಮತ್ತು 'ನಮೂದನ್ನು ನವೀಕರಿಸಿ' ಕ್ಲಿಕ್ ಮಾಡಿ.", hi: "प्रविष्टि संपादित हो रही है। परिवर्तन करें और 'प्रविष्टि अद्यतन करें' पर क्लिक करें।" }
+};
+
 // --- Constants ---
 const GATES = Array.from({ length: 15 }, (_, i) => String.fromCharCode(65 + i)); // Creates ['A', 'B', ..., 'O']
 
@@ -22,11 +102,11 @@ const SingleSelectDropdown = ({ options, selectedOption, onChange, label, disabl
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const displayValue = selectedOption || `Choose ${label}...`;
+    const displayValue = selectedOption || label;
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button type="button" onClick={handleToggle} disabled={disabled} className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 text-left disabled:bg-gray-200 disabled:cursor-not-allowed flex justify-between items-center h-10">
+            <button type="button" onClick={handleToggle} disabled={disabled} className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 text-left disabled:bg-gray-200 disabled:cursor-not-allowed flex justify-between items-center h-10 text-sm">
                 <span className="truncate">{displayValue}</span>
                 <svg className={`w-5 h-5 ml-2 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
             </button>
@@ -41,31 +121,41 @@ const SingleSelectDropdown = ({ options, selectedOption, onChange, label, disabl
     );
 };
 
-const SummaryTable = ({ title, type, gates, totals, distributed, balance, onEdit }) => {
-    const tableHeaderStyle = "px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
-    const tableCellStyle = "px-2 py-1 whitespace-nowrap text-sm text-gray-800";
+const SummaryTable = ({ title, type, gates, totals, distributed, balance, onEdit, t }) => {
+    const tableHeaderStyle = "px-1 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider";
+    const tableCellStyle = "px-1 py-1 whitespace-nowrap text-xs text-gray-800";
+    
+    const sumArray = (arr) => arr.reduce((acc, val) => acc + val, 0);
+    const totalSum = sumArray(totals);
+    const distributedSum = sumArray(distributed);
+    const balanceSum = sumArray(balance);
+
     return (
-        <div className="mb-4">
+        <div className="mb-2">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-center border">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className={`${tableHeaderStyle} w-10`}>Sl.</th><th className={`${tableHeaderStyle} w-40`}>{title}</th>
+                            <th className={`${tableHeaderStyle} w-8`}>Sl.</th><th className={`${tableHeaderStyle} w-24 text-left`}>{title}</th>
                             {gates.map((gate) => <th key={gate} className={tableHeaderStyle}>{gate}</th>)}
+                            <th className={`${tableHeaderStyle} font-bold`}>{t('total')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         <tr>
-                            <td className={tableCellStyle}>1</td><td className={`${tableCellStyle} text-left font-medium`}>Total Passes</td>
-                            {totals.map((val, i) => <td key={i} className={tableCellStyle}>{val}<button onClick={() => onEdit(type, i)} className="ml-1 text-blue-500 hover:text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button></td>)}
+                            <td className={tableCellStyle}>1</td><td className={`${tableCellStyle} text-left font-medium`}>{t('totalPasses')}</td>
+                            {totals.map((val, i) => <td key={i} className={tableCellStyle}>{val}<button onClick={() => onEdit(type, i)} className="ml-1 text-blue-500 hover:text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 inline-block" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button></td>)}
+                            <td className={`${tableCellStyle} font-bold bg-gray-50`}>{totalSum}</td>
                         </tr>
                         <tr>
-                            <td className={tableCellStyle}>2</td><td className={`${tableCellStyle} text-left font-medium`}>Distributed</td>
+                            <td className={tableCellStyle}>2</td><td className={`${tableCellStyle} text-left font-medium`}>{t('distributed')}</td>
                             {distributed.map((val, i) => <td key={i} className={tableCellStyle}>{val}</td>)}
+                            <td className={`${tableCellStyle} font-bold bg-gray-50`}>{distributedSum}</td>
                         </tr>
                         <tr>
-                            <td className={tableCellStyle}>3</td><td className={`${tableCellStyle} text-left font-medium`}>Balance</td>
+                            <td className={tableCellStyle}>3</td><td className={`${tableCellStyle} text-left font-medium`}>{t('balance')}</td>
                             {balance.map((val, i) => <td key={i} className={`${tableCellStyle} ${val < 0 ? 'text-red-500 font-bold' : ''}`}>{val}</td>)}
+                            <td className={`${tableCellStyle} font-bold bg-gray-50 ${balanceSum < 0 ? 'text-red-500' : ''}`}>{balanceSum}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -74,9 +164,10 @@ const SummaryTable = ({ title, type, gates, totals, distributed, balance, onEdit
     );
 };
 
+
 // --- Page Components ---
 
-const LoginPage = ({ onLogin, error }) => {
+const LoginPage = ({ onLogin, error, t }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -86,22 +177,22 @@ const LoginPage = ({ onLogin, error }) => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-900">Login</h2>
+                <h2 className="text-2xl font-bold text-center text-gray-900">{t('login')}</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div>
-                        <label htmlFor="email" className="text-sm font-medium text-gray-700">Email address</label>
-                        <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                        <label htmlFor="email" className="text-sm font-medium text-gray-700">{t('emailAddress')}</label>
+                        <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('enterYourEmail')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
                     <div>
-                        <label htmlFor="password">Password</label>
-                        <input id="password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                        <label htmlFor="password">{t('password')}</label>
+                        <input id="password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('enterYourPassword')} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
                     {error && <p className="text-sm text-red-600">{error}</p>}
                     <div>
                         <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Sign in
+                            {t('signIn')}
                         </button>
                     </div>
                 </form>
@@ -110,7 +201,7 @@ const LoginPage = ({ onLogin, error }) => {
     );
 };
 
-const HomePage = ({ onLogout, onChangePassword }) => {
+const HomePage = ({ onLogout, onChangePassword, t, setLanguage, language }) => {
     const [db, setDb] = useState(null);
     const [userId, setUserId] = useState(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
@@ -140,9 +231,11 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showExportOptions, setShowExportOptions] = useState(false);
     const settingsRef = useRef(null);
     const editTotalInputRef = useRef(null);
-    
+    const exportRef = useRef(null);
+
     const firebaseConfig = {
       apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
       authDomain: "dasara-pass-data.firebaseapp.com",
@@ -154,14 +247,43 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     };
     const appId = firebaseConfig.projectId;
 
-    const showTemporaryMessage = (msg, duration = 4000) => {
-        setMessage(msg);
+    const showTemporaryMessage = (msgKey, duration = 4000) => {
+        setMessage(t(msgKey));
         setShowMessage(true);
         setTimeout(() => {
             setShowMessage(false);
             setMessage('');
         }, duration);
     };
+    
+    useEffect(() => {
+        const loadScript = (id, src) => {
+            return new Promise((resolve, reject) => {
+                if (document.getElementById(id)) {
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.id = id;
+                script.src = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Script load error for ${src}`));
+                document.body.appendChild(script);
+            });
+        };
+
+        const loadExportScripts = async () => {
+            try {
+                await loadScript('xlsx', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+                await loadScript('jspdf', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+                await loadScript('jspdf-autotable', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js');
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        loadExportScripts();
+    }, []);
 
     useEffect(() => {
         const app = initializeApp(firebaseConfig);
@@ -231,12 +353,12 @@ const HomePage = ({ onLogout, onChangePassword }) => {
 
     const handleSave = async () => {
         if (!db || !userId) return;
-        if (recipientMobile && recipientMobile.length !== 10) return showTemporaryMessage("Recipient mobile must be 10 digits.");
-        if (messengerMobile && messengerMobile.length !== 10) return showTemporaryMessage("Messenger mobile must be 10 digits.");
+        if (recipientMobile && recipientMobile.length !== 10) return showTemporaryMessage("mobileDigitsError");
+        if (messengerMobile && messengerMobile.length !== 10) return showTemporaryMessage("mobileDigitsError");
         
         const count = parseInt(passCount);
-        if (!recipientName || !passCategory) return showTemporaryMessage("Recipient Name and a Pass Category are required.");
-        if (!gateSelected || !passCount || isNaN(count) || count <= 0) return showTemporaryMessage("A gate and a valid pass count are required.");
+        if (!recipientName || !passCategory) return showTemporaryMessage("nameAndCategoryError");
+        if (!gateSelected || !passCount || isNaN(count) || count <= 0) return showTemporaryMessage("gateAndCountError");
         
         const gateNumeric = GATES.indexOf(gateSelected) + 1;
         const gatesNumeric = [gateNumeric]; const counts = [count];
@@ -249,9 +371,9 @@ const HomePage = ({ onLogout, onChangePassword }) => {
             }
         }
         if (passCategory === 'palace') {
-            if (tempDistributed.palace[gateNumeric - 1] + count > palaceTotalPasses[gateNumeric - 1]) return showTemporaryMessage(`Not enough passes for Palace Gate ${gateSelected}.`);
+            if (tempDistributed.palace[gateNumeric - 1] + count > palaceTotalPasses[gateNumeric - 1]) return setMessage(`${t('notEnoughPassesError')} Palace Gate ${gateSelected}.`);
         } else if (passCategory === 'torchlight') {
-            if (tempDistributed.torchlight[gateNumeric - 1] + count > torchlightTotalPasses[gateNumeric - 1]) return showTemporaryMessage(`Not enough passes for Torchlight Gate ${gateSelected}.`);
+            if (tempDistributed.torchlight[gateNumeric - 1] + count > torchlightTotalPasses[gateNumeric - 1]) return setMessage(`${t('notEnoughPassesError')} Torchlight Gate ${gateSelected}.`);
         }
         const entryData = {
             recipientName, officeName, recipientMobile, messengerName, messengerDesignation, messengerMobile,
@@ -265,14 +387,14 @@ const HomePage = ({ onLogout, onChangePassword }) => {
             const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/passEntries`);
             if (editingEntryId) {
                 await setDoc(doc(collectionRef, editingEntryId), entryData);
-                showTemporaryMessage("Entry updated successfully!");
+                showTemporaryMessage("entryUpdatedSuccess");
             } else {
                 await addDoc(collectionRef, entryData);
-                showTemporaryMessage("Entry saved successfully!");
+                showTemporaryMessage("entrySavedSuccess");
             }
             clearForm();
         } catch (error) {
-             showTemporaryMessage(`Error: ${error.message}`);
+             setMessage(`Error: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -291,7 +413,7 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         }
         setMessengerName(entry.messengerName || ''); setMessengerDesignation(entry.messengerDesignation || ''); setMessengerMobile(entry.messengerMobile || '');
         window.scrollTo(0, 0);
-        showTemporaryMessage("Editing entry. Make changes and click 'Update Entry'.");
+        showTemporaryMessage("editingEntryMessage");
     };
 
     const handleDeleteClick = (id) => { setEntryToDeleteId(id); setShowConfirmDeleteModal(true); };
@@ -300,9 +422,9 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         setIsLoading(true);
         try {
             await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/passEntries`, entryToDeleteId));
-            showTemporaryMessage("Entry deleted successfully!");
+            showTemporaryMessage("entryDeletedSuccess");
         } catch (error) {
-             showTemporaryMessage(`Error: ${error.message}`);
+             setMessage(`Error: ${error.message}`);
         } finally {
             setIsLoading(false); setShowConfirmDeleteModal(false); setEntryToDeleteId(null);
         }
@@ -318,9 +440,9 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const handleSaveTotalPasses = async () => {
         if (!db || !userId) return;
         const value = parseInt(editTotalValue);
-        if (isNaN(value) || value < 0) return showTemporaryMessage("Please enter a valid non-negative number.");
+        if (isNaN(value) || value < 0) return showTemporaryMessage("validNumberError");
         const distributedCount = editTotalType === 'palace' ? distributedPalace[editTotalGateIndex] : distributedTorchlight[editTotalGateIndex];
-        if (value < distributedCount) return showTemporaryMessage(`Cannot set total to ${value}. Already distributed ${distributedCount}.`);
+        if (value < distributedCount) return setMessage(`${t('cannotSetTotalError')} ${value}. ${t('alreadyDistributed')} ${distributedCount}.`);
         setIsLoading(true);
         const totalsDocRef = doc(db, `artifacts/${appId}/users/${userId}/passTotals/summary`);
         const newTotals = { palaceTotals: [...palaceTotalPasses], torchlightTotals: [...torchlightTotalPasses] };
@@ -328,9 +450,9 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         else newTotals.torchlightTotals[editTotalGateIndex] = value;
         try {
             await setDoc(totalsDocRef, newTotals, { merge: true });
-            showTemporaryMessage("Total passes updated successfully!");
+            showTemporaryMessage("totalPassesUpdatedSuccess");
         } catch (error) {
-             showTemporaryMessage(`Error: ${error.message}`);
+             setMessage(`Error: ${error.message}`);
         } finally {
             setIsLoading(false); setShowEditTotalModal(false);
         }
@@ -344,18 +466,18 @@ const HomePage = ({ onLogout, onChangePassword }) => {
     const handleChangePasswordSubmit = (e) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            showTemporaryMessage("Passwords do not match.");
+            showTemporaryMessage("passwordsDoNotMatch");
             return;
         }
         if (newPassword.length < 6) {
-            showTemporaryMessage("Password should be at least 6 characters.");
+            showTemporaryMessage("passwordLengthError");
             return;
         }
         onChangePassword(newPassword, () => {
             setNewPassword('');
             setConfirmPassword('');
             setShowChangePasswordModal(false);
-            showTemporaryMessage("Password changed successfully!");
+            showTemporaryMessage("passwordChangedSuccess");
         });
     };
 
@@ -373,76 +495,253 @@ const HomePage = ({ onLogout, onChangePassword }) => {
         }
     };
 
+    const handleExport = (format) => {
+        const date = new Date().toLocaleString();
+        const sumArray = (arr) => arr.reduce((acc, val) => acc + val, 0);
+
+        if (format === 'excel') {
+            if (typeof window.XLSX === 'undefined') return showTemporaryMessage("Excel library is loading, please try again shortly.");
+            
+            const wb = window.XLSX.utils.book_new();
+
+            const recordsToExport = passEntries.map((entry, index) => ({
+                '#': index + 1,
+                'Recipient Name': entry.recipientName || '',
+                'Office': entry.officeName || '',
+                'Recipient Mobile': entry.recipientMobile || '',
+                'Pass Category': entry.passCategory || '',
+                'Gate': entry.passCategory === 'palace' ? GATES[(entry.palaceGates || [])[0] - 1] : GATES[(entry.torchlightGates || [])[0] - 1],
+                'Passes': entry.totalPassesRequested || 0,
+                'Messenger Name': entry.messengerName || '',
+                'Timestamp': entry.timestamp ? new Date(entry.timestamp).toLocaleString() : ''
+            }));
+            const ws_records = window.XLSX.utils.json_to_sheet(recordsToExport);
+            window.XLSX.utils.book_append_sheet(wb, ws_records, "Pass Records");
+
+            const palaceSummaryData = [
+                { Category: 'Total Passes', ...Object.fromEntries(GATES.map((g, i) => [g, palaceTotalPasses[i]])), Total: sumArray(palaceTotalPasses) },
+                { Category: 'Distributed', ...Object.fromEntries(GATES.map((g, i) => [g, distributedPalace[i]])), Total: sumArray(distributedPalace) },
+                { Category: 'Balance', ...Object.fromEntries(GATES.map((g, i) => [g, balancePalace[i]])), Total: sumArray(balancePalace) }
+            ];
+            const ws_palace = window.XLSX.utils.json_to_sheet(palaceSummaryData);
+            window.XLSX.utils.book_append_sheet(wb, ws_palace, "Palace Summary");
+
+            const torchlightSummaryData = [
+                { Category: 'Total Passes', ...Object.fromEntries(GATES.map((g, i) => [g, torchlightTotalPasses[i]])), Total: sumArray(torchlightTotalPasses) },
+                { Category: 'Distributed', ...Object.fromEntries(GATES.map((g, i) => [g, distributedTorchlight[i]])), Total: sumArray(distributedTorchlight) },
+                { Category: 'Balance', ...Object.fromEntries(GATES.map((g, i) => [g, balanceTorchlight[i]])), Total: sumArray(balanceTorchlight) }
+            ];
+            const ws_torchlight = window.XLSX.utils.json_to_sheet(torchlightSummaryData);
+            window.XLSX.utils.book_append_sheet(wb, ws_torchlight, "Torchlight Summary");
+
+            window.XLSX.writeFile(wb, `Dasara_Pass_Report_${date}.xlsx`);
+
+        } else if (format === 'pdf') {
+            if (typeof window.jspdf === 'undefined') return showTemporaryMessage("PDF library is loading, please try again shortly.");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            doc.setFontSize(18);
+            doc.text("Mysuru Dasara Pass Distribution Report", 148, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${date}`, 148, 22, { align: 'center' });
+
+            doc.setFontSize(14);
+            doc.text("Palace Pass Summary", 14, 35);
+            doc.autoTable({
+                startY: 40,
+                head: [['Category', ...GATES, 'Total']],
+                body: [
+                    ['Total Passes', ...palaceTotalPasses, sumArray(palaceTotalPasses)],
+                    ['Distributed', ...distributedPalace, sumArray(distributedPalace)],
+                    ['Balance', ...balancePalace, sumArray(balancePalace)]
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [22, 160, 133] }
+            });
+
+            let finalY = doc.lastAutoTable.finalY || 40;
+            doc.text("Torchlight Pass Summary", 14, finalY + 15);
+            doc.autoTable({
+                startY: finalY + 20,
+                head: [['Category', ...GATES, 'Total']],
+                body: [
+                    ['Total Passes', ...torchlightTotalPasses, sumArray(torchlightTotalPasses)],
+                    ['Distributed', ...distributedTorchlight, sumArray(distributedTorchlight)],
+                    ['Balance', ...balanceTorchlight, sumArray(balanceTorchlight)]
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [211, 84, 0] }
+            });
+            
+            doc.addPage('portrait');
+            doc.setFontSize(14);
+            doc.text("Individual Pass Distribution Records", 14, 15);
+            
+            const recordsBody = passEntries.map((entry, index) => [
+                index + 1,
+                entry.recipientName || '',
+                entry.officeName || '',
+                entry.recipientMobile || '',
+                entry.passCategory || '',
+                entry.passCategory === 'palace' ? GATES[(entry.palaceGates || [])[0] - 1] : GATES[(entry.torchlightGates || [])[0] - 1],
+                entry.totalPassesRequested || 0,
+                entry.messengerName || '',
+                new Date(entry.timestamp).toLocaleString()
+            ]);
+
+            doc.autoTable({
+                startY: 25,
+                head: [['#', 'Recipient', 'Office', 'Mobile', 'Category', 'Gate', 'Passes', 'Messenger', 'Timestamp']],
+                body: recordsBody,
+                theme: 'striped',
+                headStyles: { fillColor: [41, 128, 185] }
+            });
+
+
+            doc.save(`Dasara_Pass_Report_${date}.pdf`);
+
+        } else if (format === 'doc') {
+            let content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Dasara Pass Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+                    th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+                    th { background-color: #f2f2f2; }
+                    h1, h2, h3 { color: #333; }
+                </style>
+                </head>
+                <body>
+                    <div style="text-align:center;">
+                        <h1>Mysuru Dasara Pass Distribution Report</h1>
+                        <p>Generated on: ${date}</p>
+                    </div>
+            `;
+
+            const buildSummaryTable = (title, totals, distributed, balance) => {
+                let table = `<h2>${title}</h2><table><thead><tr><th>Category</th>`;
+                GATES.forEach(g => table += `<th>${g}</th>`);
+                table += `<th>Total</th></tr></thead><tbody>`;
+                
+                table += `<tr><td>Total Passes</td>${totals.map(t => `<td>${t}</td>`).join('')}<td>${sumArray(totals)}</td></tr>`;
+                table += `<tr><td>Distributed</td>${distributed.map(d => `<td>${d}</td>`).join('')}<td>${sumArray(distributed)}</td></tr>`;
+                table += `<tr><td>Balance</td>${balance.map(b => `<td>${b}</td>`).join('')}<td>${sumArray(balance)}</td></tr>`;
+                
+                table += '</tbody></table>';
+                return table;
+            };
+
+            content += buildSummaryTable('Palace Pass Summary', palaceTotalPasses, distributedPalace, balancePalace);
+            content += buildSummaryTable('Torchlight Pass Summary', torchlightTotalPasses, distributedTorchlight, balanceTorchlight);
+            
+            content += '<h2>Individual Records</h2>';
+            passEntries.forEach((entry, index) => {
+                content += `
+                    <h3>Record #${index + 1}</h3>
+                    <table>
+                        <tr><td style="width: 30%;"><strong>Recipient</strong></td><td>${entry.recipientName} (${entry.officeName || 'N/A'})</td></tr>
+                        <tr><td><strong>Mobile</strong></td><td>${entry.recipientMobile || 'N/A'}</td></tr>
+                        <tr><td><strong>Pass Details</strong></td><td>${entry.passCategory} - ${entry.totalPassesRequested} passes for Gate ${entry.passCategory === 'palace' ? GATES[(entry.palaceGates || [])[0] - 1] : GATES[(entry.torchlightGates || [])[0] - 1]}</td></tr>
+                        <tr><td><strong>Messenger</strong></td><td>${entry.messengerName || 'N/A'} (${entry.messengerDesignation || 'N/A'})</td></tr>
+                        <tr><td><strong>Timestamp</strong></td><td>${new Date(entry.timestamp).toLocaleString()}</td></tr>
+                    </table>
+                `;
+            });
+
+            content += '</body></html>';
+            
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(content);
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = `Dasara_Pass_Report_${date}.doc`;
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+        setShowExportOptions(false);
+    };
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (settingsRef.current && !settingsRef.current.contains(event.target)) {
                 setShowSettings(false);
+            }
+            if (exportRef.current && !exportRef.current.contains(event.target)) {
+                setShowExportOptions(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const sectionTitleStyle = "text-xl font-semibold text-gray-800 mb-2 border-b pb-2";
-    const formRowStyle = "flex items-center gap-2";
-    const labelStyle = "w-24 text-right text-sm font-medium text-gray-700 flex-shrink-0";
-    const inputStyle = "p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 h-10";
-    const tableHeaderStyle = "px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
-    const tableCellStyle = "px-2 py-1 whitespace-nowrap text-sm text-gray-800";
+    const sectionTitleStyle = "text-lg font-semibold text-gray-800 mb-2 border-b pb-1";
+    const formRowStyle = "flex flex-col sm:flex-row items-start sm:items-center gap-2";
+    const labelStyle = "w-full sm:w-24 text-left sm:text-right text-sm font-medium text-gray-700 flex-shrink-0";
+    const inputStyle = "p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50 h-9 text-sm";
+    const tableHeaderStyle = "px-1 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+    const tableCellStyle = "px-1 py-1 whitespace-nowrap text-xs text-gray-800";
 
     return (
-        <div className="min-h-screen bg-gray-50 p-2 font-sans flex flex-col items-center">
+        <div className="h-screen max-h-screen bg-gray-50 p-2 font-sans flex flex-col items-center overflow-hidden">
             {showMessage && <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all">{message}</div>}
-             <header className="w-full max-w-screen-2xl mx-auto flex-shrink-0 flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center flex-1">MYSURU DASARA PASSES DISTRIBUTION 2025</h1>
+             <header className="w-full max-w-screen-2xl mx-auto flex-shrink-0 flex justify-between items-center pb-2">
+                <h1 className="text-base sm:text-xl lg:text-2xl font-bold text-gray-800 text-center flex-1">{t('pageTitle')}</h1>
                 <div className="relative" ref={settingsRef}>
                     <button onClick={() => setShowSettings(prev => !prev)} className="p-2 rounded-full hover:bg-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     </button>
                     {showSettings && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                            <button onClick={() => {setShowChangePasswordModal(true); setShowSettings(false);}} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Change Password</button>
-                            <button onClick={onLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                            <button onClick={() => {setShowChangePasswordModal(true); setShowSettings(false);}} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{t('changePassword')}</button>
+                            <div className="border-t my-1"></div>
+                            <div className="px-4 py-2 text-xs text-gray-500">{t('language')}</div>
+                             <button onClick={() => {setLanguage('en'); setShowSettings(false);}} className={`block w-full text-left px-4 py-2 text-sm  hover:bg-gray-100 ${language === 'en' ? 'font-bold text-blue-600' : 'text-gray-700'}`}>English</button>
+                             <button onClick={() => {setLanguage('kn'); setShowSettings(false);}} className={`block w-full text-left px-4 py-2 text-sm  hover:bg-gray-100 ${language === 'kn' ? 'font-bold text-blue-600' : 'text-gray-700'}`}>ಕನ್ನಡ</button>
+                             <button onClick={() => {setLanguage('hi'); setShowSettings(false);}} className={`block w-full text-left px-4 py-2 text-sm  hover:bg-gray-100 ${language === 'hi' ? 'font-bold text-blue-600' : 'text-gray-700'}`}>हिन्दी</button>
+                            <div className="border-t my-1"></div>
+                            <button onClick={onLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{t('logout')}</button>
                         </div>
                     )}
                 </div>
             </header>
-            <main className="w-full max-w-screen-2xl mx-auto flex-1 flex flex-col gap-4 overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col">
-                        <div className="flex-1 overflow-y-auto pr-2">
-                            <h2 className={sectionTitleStyle}>Input Section</h2>
-                            <div className="flex flex-col gap-3">
-                                <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
-                                <div className={formRowStyle}><label className={labelStyle}>Office ::</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
-                                <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => handleMobileChange(e, setRecipientMobile)} maxLength="10" /></div>
-                                <div className={`${formRowStyle} flex-wrap`}>
-                                    <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-24 text-right">Category ::</label>
-                                    <div className="flex gap-4 py-2">
-                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Palace</span></label>
-                                        <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">Torchlight</span></label>
-                                    </div>
-                                    <div className="flex-1 min-w-[120px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label="Gate" disabled={!passCategory} /></div>
-                                    <div className="w-28"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder="Passes" min="1" disabled={!passCategory} /></div>
+            <main className="w-full max-w-screen-2xl mx-auto flex-grow flex flex-col gap-2 overflow-hidden">
+                <div className="flex-grow grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-0">
+                    <div className="bg-white p-2 rounded-lg shadow-lg flex flex-col overflow-hidden">
+                        <h2 className={sectionTitleStyle}>{t('inputSection')}</h2>
+                        <div className="flex-grow overflow-y-auto pr-2 space-y-2">
+                            <div className={formRowStyle}><label className={labelStyle}>{t('nameLabel')}</label><input type="text" className={inputStyle} value={recipientName} onChange={(e) => setRecipientName(e.target.value)} /></div>
+                            <div className={formRowStyle}><label className={labelStyle}>{t('officeLabel')}</label><input type="text" className={inputStyle} value={officeName} onChange={(e) => setOfficeName(e.target.value)} /></div>
+                            <div className={formRowStyle}><label className={labelStyle}>{t('mobileLabel')}</label><input type="tel" className={inputStyle} value={recipientMobile} onChange={(e) => handleMobileChange(e, setRecipientMobile)} maxLength="10" /></div>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
+                                <label className="text-sm font-medium text-gray-700 flex-shrink-0 w-full sm:w-24 text-left sm:text-right">{t('categoryLabel')}</label>
+                                <div className="flex gap-4 py-1">
+                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="palace" checked={passCategory === 'palace'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">{t('palace')}</span></label>
+                                    <label className="inline-flex items-center"><input type="radio" className="form-radio h-4 w-4 text-blue-600" name="passCategory" value="torchlight" checked={passCategory === 'torchlight'} onChange={handleCategoryChange} /><span className="ml-2 text-sm">{t('torchlight')}</span></label>
                                 </div>
-                                <div className="border-t pt-3 mt-3">
-                                    <h3 className="text-md font-semibold text-gray-700 mb-3">Messenger Details</h3>
-                                    <div className="flex flex-col gap-3">
-                                        <div className={formRowStyle}><label className={labelStyle}>Name ::</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
-                                        <div className={formRowStyle}><label className={labelStyle}>Designation ::</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
-                                        <div className={formRowStyle}><label className={labelStyle}>Mobile ::</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => handleMobileChange(e, setMessengerMobile)} maxLength="10" /></div>
-                                    </div>
+                                <div className="flex-1 min-w-[100px]"><SingleSelectDropdown options={GATES} selectedOption={gateSelected} onChange={setGateSelected} label={t('chooseGate')} disabled={!passCategory} /></div>
+                                <div className="w-24"><input type="number" className={inputStyle} value={passCount} onChange={(e) => setPassCount(e.target.value)} placeholder={t('passesPlaceholder')} min="1" disabled={!passCategory} /></div>
+                            </div>
+                            <div className="border-t pt-2 mt-2">
+                                <h3 className="text-base font-semibold text-gray-700 mb-2">{t('messengerDetails')}</h3>
+                                <div className="space-y-2">
+                                    <div className={formRowStyle}><label className={labelStyle}>{t('nameLabel')}</label><input type="text" className={inputStyle} value={messengerName} onChange={(e) => setMessengerName(e.target.value)} /></div>
+                                    <div className={formRowStyle}><label className={labelStyle}>{t('designationLabel')}</label><input type="text" className={inputStyle} value={messengerDesignation} onChange={(e) => setMessengerDesignation(e.target.value)} /></div>
+                                    <div className={formRowStyle}><label className={labelStyle}>{t('mobileLabel')}</label><input type="tel" className={inputStyle} value={messengerMobile} onChange={(e) => handleMobileChange(e, setMessengerMobile)} maxLength="10" /></div>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={handleSave} className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400 flex-shrink-0" disabled={!isAuthReady || isLoading}>{isLoading ? 'Processing...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}</button>
-                        {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md flex-shrink-0">Cancel Edit</button>}
+                        <div className="flex-shrink-0 pt-2">
+                            <button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-200 ease-in-out disabled:bg-gray-400" disabled={!isAuthReady || isLoading}>{isLoading ? t('processing') : (editingEntryId ? t('updateEntry') : t('saveEntry'))}</button>
+                            {editingEntryId && <button onClick={clearForm} className="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Cancel Edit</button>}
+                        </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-lg overflow-y-auto min-w-0">
-                        <h2 className={sectionTitleStyle}>Records Table</h2>
-                        <div className="overflow-x-auto">
+                    <div className="bg-white p-2 rounded-lg shadow-lg flex flex-col overflow-hidden">
+                        <h2 className={sectionTitleStyle}>{t('recordsTable')}</h2>
+                        <div className="overflow-y-auto flex-grow">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50"><tr><th className={tableHeaderStyle}>#</th><th className={tableHeaderStyle}>Name</th><th className={tableHeaderStyle}>Palace</th><th className={tableHeaderStyle}>Torchlight</th><th className={tableHeaderStyle}>Total</th><th className={tableHeaderStyle}>Actions</th></tr></thead>
+                                <thead className="bg-gray-50 sticky top-0"><tr><th className={tableHeaderStyle}>#</th><th className={tableHeaderStyle}>{t('recordsTable_Name')}</th><th className={tableHeaderStyle}>{t('recordsTable_Palace')}</th><th className={tableHeaderStyle}>{t('recordsTable_Torchlight')}</th><th className={tableHeaderStyle}>{t('recordsTable_Total')}</th><th className={tableHeaderStyle}>{t('recordsTable_Actions')}</th></tr></thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {passEntries.map((entry, index) => (
                                         <tr key={entry.id} className="hover:bg-gray-50">
@@ -450,27 +749,40 @@ const HomePage = ({ onLogout, onChangePassword }) => {
                                             <td className={tableCellStyle}>{(entry.palacePassesPerGate || []).reduce((s, c) => s + c, 0)}</td>
                                             <td className={tableCellStyle}>{(entry.torchlightPassesPerGate || []).reduce((s, c) => s + c, 0)}</td>
                                             <td className={tableCellStyle}>{entry.totalPassesRequested}</td>
-                                            <td className={`${tableCellStyle} flex gap-2`}>
-                                                <button onClick={() => handleEditRecord(entry)} className="text-blue-600 hover:text-blue-900 font-medium">Edit</button>
-                                                <button onClick={() => handleDeleteClick(entry.id)} className="text-red-600 hover:text-red-900 font-medium">Delete</button>
+                                            <td className={`${tableCellStyle} flex gap-2 justify-center`}>
+                                                <button onClick={() => handleEditRecord(entry)} className="text-blue-600 hover:text-blue-900 font-medium">{t('edit')}</button>
+                                                <button onClick={() => handleDeleteClick(entry.id)} className="text-red-600 hover:text-red-900 font-medium">{t('delete')}</button>
                                             </td>
                                         </tr>
                                     ))}
-                                    {passEntries.length === 0 && !isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">No records found.</td></tr>}
-                                    {isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">Loading records...</td></tr>}
+                                    {passEntries.length === 0 && !isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">{t('noRecordsFound')}</td></tr>}
+                                    {isLoading && <tr><td colSpan="6" className="text-center py-4 text-gray-500">{t('loadingRecords')}</td></tr>}
                                 </tbody>
                             </table>
                         </div>
+                        <div className="mt-2 self-end relative flex-shrink-0" ref={exportRef}>
+                            <button onClick={() => setShowExportOptions(prev => !prev)} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-md shadow-lg transition duration-200 ease-in-out flex items-center gap-2 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                                {t('export')}
+                            </button>
+                            {showExportOptions && (
+                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border">
+                                    <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{t('exportAsPDF')}</button>
+                                    <button onClick={() => handleExport('excel')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{t('exportAsExcel')}</button>
+                                    <button onClick={() => handleExport('doc')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{t('exportAsDOC')}</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-lg flex-1 overflow-y-auto min-w-0">
-                    <SummaryTable title="Palace Summary" type="palace" gates={GATES} totals={palaceTotalPasses} distributed={distributedPalace} balance={balancePalace} onEdit={handleEditTotalPasses} />
-                    <SummaryTable title="Torchlight Summary" type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} />
+                <div className="bg-white p-2 rounded-lg shadow-lg flex-shrink-0">
+                    <SummaryTable title={t('palaceSummary')} type="palace" gates={GATES} totals={palaceTotalPasses} distributed={distributedPalace} balance={balancePalace} onEdit={handleEditTotalPasses} t={t} />
+                    <SummaryTable title={t('torchlightSummary')} type="torchlight" gates={GATES} totals={torchlightTotalPasses} distributed={distributedTorchlight} balance={balanceTorchlight} onEdit={handleEditTotalPasses} t={t} />
                 </div>
             </main>
-            {showEditTotalModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Edit Total for Gate {GATES[editTotalGateIndex]}</h3><input type="number" ref={editTotalInputRef} className={inputStyle} value={editTotalValue} onChange={(e) => setEditTotalValue(e.target.value)} min="0" onKeyDown={handleModalKeyDown} /><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowEditTotalModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={handleSaveTotalPasses} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div>}
-            {showConfirmDeleteModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Confirm Deletion</h3><p className="text-gray-700 mb-6">Are you sure you want to delete this entry? This cannot be undone.</p><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowConfirmDeleteModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button></div></div></div>}
-            {showChangePasswordModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-6 rounded-lg shadow-xl w-96"><h3 className="text-lg font-bold mb-4">Change Password</h3><form onSubmit={handleChangePasswordSubmit}><div className="space-y-4"><input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputStyle} required /><input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputStyle} required /></div><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowChangePasswordModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Change</button></div></form></div></div>}
+            {showEditTotalModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm"><h3 className="text-lg font-bold mb-4">{t('editTotalForGate')} {GATES[editTotalGateIndex]}</h3><input type="number" ref={editTotalInputRef} className={inputStyle} value={editTotalValue} onChange={(e) => setEditTotalValue(e.target.value)} min="0" onKeyDown={handleModalKeyDown} /><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowEditTotalModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{t('cancel')}</button><button onClick={handleSaveTotalPasses} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{t('save')}</button></div></div></div>}
+            {showConfirmDeleteModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm"><h3 className="text-lg font-bold mb-4">{t('confirmDeletion')}</h3><p className="text-gray-700 mb-6">{t('confirmDeletionMessage')}</p><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowConfirmDeleteModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{t('cancel')}</button><button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">{t('delete')}</button></div></div></div>}
+            {showChangePasswordModal && <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm"><h3 className="text-lg font-bold mb-4">{t('changePassword')}</h3><form onSubmit={handleChangePasswordSubmit}><div className="space-y-4"><input type="password" placeholder={t('newPassword')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputStyle} required /><input type="password" placeholder={t('confirmNewPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputStyle} required /></div><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setShowChangePasswordModal(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{t('cancel')}</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{t('change')}</button></div></form></div></div>}
         </div>
     );
 };
@@ -480,6 +792,9 @@ const App = () => {
     const [auth, setAuth] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [language, setLanguage] = useState('en');
+
+    const t = (key) => translations[key] ? translations[key][language] : key;
     
     const firebaseConfig = {
       apiKey: "AIzaSyBeiQ8dG_4YUkg-3G2LQTWcJ1q5xUptNww",
@@ -527,7 +842,7 @@ const App = () => {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
-    return user ? <HomePage onLogout={handleLogout} onChangePassword={handleChangePassword} /> : <LoginPage onLogin={handleLogin} error={error} />;
+    return user ? <HomePage onLogout={handleLogout} onChangePassword={handleChangePassword} t={t} setLanguage={setLanguage} language={language} /> : <LoginPage onLogin={handleLogin} error={error} t={t} />;
 };
 
 export default App;
